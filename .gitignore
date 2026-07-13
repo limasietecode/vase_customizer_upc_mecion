@@ -1,0 +1,20 @@
+# Claude Code local tool config
+.claude/
+
+# Windows / Google Drive metadata
+desktop.ini
+Thumbs.db
+*.tmp
+*.gdoc
+
+# Processing Android mode build output (created on export/run)
+android/
+bin/
+build/
+*.apk
+*.aab
+local.properties
+
+# Processing editor state
+.settings/
+*.class
