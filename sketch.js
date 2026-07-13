@@ -52,10 +52,12 @@ function setup() {
   initUI(resetCamera);
   saveSnapshot();
 
-  // Reacciona al tamano real del host en cuanto el layout lo asienta
-  // (mas fiable que adivinar un delay: cubre el primer paint y
-  // cualquier cambio de tamano posterior, ej. redimensionar la ventana).
+  // Reacciona a cambios de tamano del host despues del arranque (ej.
+  // redimensionar la ventana), mas una correccion inmediata post-layout
+  // de respaldo: el disparo inicial de ResizeObserver no es fiable en
+  // todos los navegadores.
   new ResizeObserver(windowResized).observe(host);
+  requestAnimationFrame(() => requestAnimationFrame(windowResized));
 }
 
 function windowResized() {
