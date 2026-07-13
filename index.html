@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vasija Organica — customizador generativo</title>
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+</head>
+<body>
+<div id="app">
+  <aside id="panel">
+    <div class="panel-head">
+      <div class="title">
+        <span class="title-main">VASIJA </span><span class="title-accent">ORGANICA</span>
+        <div class="subtitle">parametros generativos</div>
+      </div>
+      <button id="themeBtn" class="theme-btn" title="Cambiar tema (T)" aria-label="Cambiar tema"></button>
+    </div>
+
+    <div id="sliderHost"></div>
+
+    <div class="btn-row">
+      <button id="btnAnimar" class="btn btn-sec full">ANIMAR</button>
+    </div>
+    <div class="btn-row two">
+      <button id="btnGuardar" class="btn btn-sec">GUARDAR</button>
+      <button id="btnDeshacer" class="btn btn-sec" disabled>DESHACER</button>
+    </div>
+    <div class="btn-row two">
+      <button id="btnPresetSave" class="btn btn-sec">GUARDAR JSON</button>
+      <button id="btnPresetLoad" class="btn btn-sec">CARGAR JSON</button>
+    </div>
+    <div class="btn-row">
+      <button id="btnExport" class="btn btn-pri full">EXPORTAR STL</button>
+    </div>
+    <input type="file" id="presetFileInput" accept="application/json,.json" hidden />
+
+    <div class="info-row">
+      <span id="infoHistorial">historial: 0 / 0</span>
+      <span id="infoFps">0 fps</span>
+    </div>
+  </aside>
+
+  <main id="viewCard">
+    <div id="canvasHost"></div>
+    <div id="feedback" class="feedback"></div>
+  </main>
+</div>
+
+<script src="params.js"></script>
+<script src="mesh.js"></script>
+<script src="stl.js"></script>
+<script src="presets.js"></script>
+<script src="ui.js"></script>
+<script src="sketch.js"></script>
+</body>
+</html>
