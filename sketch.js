@@ -68,6 +68,13 @@ function setup() {
   // todos los navegadores.
   new ResizeObserver(windowResized).observe(host);
   requestAnimationFrame(() => requestAnimationFrame(windowResized));
+
+  // Respaldo independiente del loop interno de p5: si algo detiene el
+  // requestAnimationFrame nativo (por ejemplo una excepcion no atrapada
+  // en algun punto de draw() que impida programar el siguiente frame),
+  // este intervalo sigue forzando un redraw() con el estado actual, asi
+  // los sliders nunca quedan "congelados" sin reflejarse en el modelo.
+  setInterval(() => redraw(), 100);
 }
 
 function windowResized() {
@@ -78,36 +85,40 @@ function windowResized() {
 }
 
 function draw() {
-  background(darkMode ? 17 : 238, darkMode ? 19 : 240, darkMode ? 23 : 243);
-
-  // Un valor de parametro no previsto no debe poder tirar el loop de
-  // dibujo entero (un throw dentro de draw() detiene requestAnimationFrame
-  // para siempre): se aisla la reconstruccion de malla para poder seguir
-  // dibujando el ultimo estado valido en vez de congelarse.
+  // Toda la funcion queda protegida: p5 programa el SIGUIENTE frame de
+  // requestAnimationFrame recien al terminar de ejecutar este draw(), asi
+  // que cualquier excepcion no atrapada en cualquier punto de aqui abajo
+  // (reconstruccion de malla, camara, luces, dibujo) deja el loop muerto
+  // para siempre y el modelo congelado, sin ningun error visible para
+  // quien esta usando la pagina. Se atrapa todo y se sigue dibujando el
+  // ultimo estado valido en vez de romper el loop.
   try {
+    background(darkMode ? 17 : 238, darkMode ? 19 : 240, darkMode ? 23 : 243);
+
     rebuildGeometryIfNeeded();
+
+    const ex = camDist * Math.sin(camRotY) * Math.cos(camRotX);
+    const ey = camDist * Math.sin(camRotX);
+    const ez = camDist * Math.cos(camRotY) * Math.cos(camRotX);
+
+    camera(ex, -ey, ez, 0, 0, 0, 0, 1, 0);
+    const aspect = height > 0 ? width / height : 1;
+    perspective(Math.PI / 3.0, aspect, 10, 5000);
+
+    ambientLight(45, 50, 55);
+    directionalLight(210, 230, 220, 0.5, 0.7, -0.6);
+    directionalLight(60, 85, 100, -0.7, -0.3, 0.4);
+    directionalLight(120, 140, 130, 0.0, -0.8, 0.2);
+    specularMaterial(COL_SPEC[0], COL_SPEC[1], COL_SPEC[2]);
+    shininess(state.shininess);
+
+    drawVase();
+
+    if (frameCount % 10 === 0) updateFpsText(frameRate());
   } catch (e) {
-    console.error("Error reconstruyendo la malla, se mantiene la anterior:", e);
+    console.error("Error en draw(), se mantiene el ultimo frame valido:", e);
     meshDirty = false;
   }
-
-  const ex = camDist * Math.sin(camRotY) * Math.cos(camRotX);
-  const ey = camDist * Math.sin(camRotX);
-  const ez = camDist * Math.cos(camRotY) * Math.cos(camRotX);
-
-  camera(ex, -ey, ez, 0, 0, 0, 0, 1, 0);
-  perspective(Math.PI / 3.0, width / height, 10, 5000);
-
-  ambientLight(45, 50, 55);
-  directionalLight(210, 230, 220, 0.5, 0.7, -0.6);
-  directionalLight(60, 85, 100, -0.7, -0.3, 0.4);
-  directionalLight(120, 140, 130, 0.0, -0.8, 0.2);
-  specularMaterial(COL_SPEC[0], COL_SPEC[1], COL_SPEC[2]);
-  shininess(state.shininess);
-
-  drawVase();
-
-  if (frameCount % 10 === 0) updateFpsText(frameRate());
 }
 
 function mousePressed() {
