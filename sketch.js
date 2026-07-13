@@ -12,7 +12,12 @@ let animPhase = 0;
 let prevMouseX = 0, prevMouseY = 0;
 let dragging3D = false;
 
-let currentGeom = null;
+// Datos de la malla actual (posiciones + normales aplanadas, igual
+// formato que buildIndexedGeometry). Se recalculan solo cuando hace
+// falta; el dibujo en si usa modo inmediato (ver drawVase), asi no
+// depende de la cache de buffers retenidos de p5 (model()/gid), que
+// en la practica no siempre refresca los datos como cabria esperar.
+let currentMesh = null;
 
 function resetCamera() {
   camDist = 700; camRotY = 0.5; camRotX = 0.25;
@@ -27,17 +32,22 @@ function rebuildGeometryIfNeeded() {
   }
 
   const { outer, inner } = buildMeshAt(LEVELS_VIEW, SLICES_VIEW, animPhase);
-  const { positions, normals, indices } = buildIndexedGeometry(outer, inner);
+  currentMesh = buildIndexedGeometry(outer, inner);
+}
 
-  const geom = new p5.Geometry();
-  for (let i = 0; i < positions.length; i += 3) {
-    geom.vertices.push(new p5.Vector(positions[i], positions[i + 1], positions[i + 2]));
-    geom.vertexNormals.push(new p5.Vector(normals[i], normals[i + 1], normals[i + 2]));
+function drawVase() {
+  if (!currentMesh) return;
+  const { positions, normals, indices } = currentMesh;
+
+  beginShape(TRIANGLES);
+  noStroke();
+  fill(COL_FILL[0], COL_FILL[1], COL_FILL[2]);
+  for (let k = 0; k < indices.length; k++) {
+    const i = indices[k] * 3;
+    normal(normals[i], normals[i + 1], normals[i + 2]);
+    vertex(positions[i], positions[i + 1], positions[i + 2]);
   }
-  for (let i = 0; i < indices.length; i += 3) {
-    geom.faces.push([indices[i], indices[i + 1], indices[i + 2]]);
-  }
-  currentGeom = geom;
+  endShape();
 }
 
 function setup() {
@@ -70,7 +80,16 @@ function windowResized() {
 function draw() {
   background(darkMode ? 17 : 238, darkMode ? 19 : 240, darkMode ? 23 : 243);
 
-  rebuildGeometryIfNeeded();
+  // Un valor de parametro no previsto no debe poder tirar el loop de
+  // dibujo entero (un throw dentro de draw() detiene requestAnimationFrame
+  // para siempre): se aisla la reconstruccion de malla para poder seguir
+  // dibujando el ultimo estado valido en vez de congelarse.
+  try {
+    rebuildGeometryIfNeeded();
+  } catch (e) {
+    console.error("Error reconstruyendo la malla, se mantiene la anterior:", e);
+    meshDirty = false;
+  }
 
   const ex = camDist * Math.sin(camRotY) * Math.cos(camRotX);
   const ey = camDist * Math.sin(camRotX);
@@ -86,9 +105,7 @@ function draw() {
   specularMaterial(COL_SPEC[0], COL_SPEC[1], COL_SPEC[2]);
   shininess(state.shininess);
 
-  noStroke();
-  fill(COL_FILL[0], COL_FILL[1], COL_FILL[2]);
-  if (currentGeom) model(currentGeom);
+  drawVase();
 
   if (frameCount % 10 === 0) updateFpsText(frameRate());
 }

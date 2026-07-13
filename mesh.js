@@ -52,7 +52,10 @@ function profileRadius(zNorm, p) {
   for (let i = 0; i < pz.length - 1; i++) {
     if (zFlip <= pz[i + 1]) { seg = i; break; }
   }
-  const t = Math.min(1, Math.max(0, (zFlip - pz[seg]) / (pz[seg + 1] - pz[seg])));
+  const segWidth = pz[seg + 1] - pz[seg];
+  // BASE_BULGE y WAIST_POS son sliders independientes: pueden coincidir
+  // (segmento de ancho 0), lo que daria una division por cero -> NaN.
+  const t = segWidth > 1e-6 ? Math.min(1, Math.max(0, (zFlip - pz[seg]) / segWidth)) : 1;
   const ts = smoothstep(t);
   return pr[seg] + (pr[seg + 1] - pr[seg]) * ts;
 }
